@@ -15,8 +15,8 @@ class Minesweeper:
         self.num_mines = 20
 
         # import images
-        i_width = 10
-        i_height = 10
+        i_width = 20
+        i_height = 20
         self.image_unopened = ImageTk.PhotoImage(Image.open("img/unopened.gif").resize((i_width,i_height), Image.ANTIALIAS))
         self.image_opened = ImageTk.PhotoImage(Image.open("img/opened.gif").resize((i_width,i_height), Image.ANTIALIAS))
         self.image_mine = ImageTk.PhotoImage(Image.open("img/mine.gif").resize((i_width,i_height), Image.ANTIALIAS))
@@ -50,7 +50,7 @@ class Minesweeper:
 
         # create buttons
         self.buttons = dict({})
-        x_coord = 1
+        x_coord = 0
         y_coord = 0
         for x in range(0, 100):
             mine = 1 if x in mines else 0
@@ -66,17 +66,18 @@ class Minesweeper:
         
         # lay buttons in grid
         for key in self.buttons:
-            self.buttons[key].button.grid( row = self.buttons[key].x, column = self.buttons[key].y )
+            self.buttons[key].button.grid( row = self.buttons[key].x + 1, column = self.buttons[key].y )
 
         # find nearby mines and display number on tile
 
 
         #add mine and count at the end
-        self.label2 = tk.Label(frame, text = "Mines: "+str(self.num_mines))
-        self.label2.grid(row = 11, column = 0, columnspan = 5)
+        self.label_num_mine = tk.Label(frame, text = "Mines: "+str(self.num_mines))
+        self.label_num_mine.grid(row = self.height + 1, column = 0, columnspan = self.width // 2)
 
-        self.label3 = tk.Label(frame, text = "Flags: "+str(self.flags))
-        self.label3.grid(row = 11, column = 4, columnspan = 5)
+        self.label_num_flag = tk.Label(frame, text = "Flags: "+str(self.flags))
+        self.label_num_flag.grid(row = self.height + 1, column = self.width // 2 - 1, columnspan = self.width // 2)
+        print("row = ",self.height + 1," column = ",self.width // 2 - 1," columnspan = ",self.width // 2)
 
 class Tile:
 
