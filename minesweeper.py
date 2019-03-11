@@ -49,15 +49,17 @@ class Minesweeper:
             mines.add(random.randint(0,self.num_tiles-1))
 
         # create buttons
-        self.buttons = dict({})
+        self.tiles = []
         x_coord = 0
         y_coord = 0
-        for x in range(0, 100):
-            mine = 1 if x in mines else 0
+        for tile_id in range(self.num_tiles):
+            mine = 1 if tile_id in mines else 0
             # tile image changeable for debug reasons:
             img = self.image_unopened
-            self.buttons[x] = Tile(x,frame, img, mine, x_coord, y_coord, self.height, self.width)
-            self.buttons[x].bind_button(self.left_click_event, self.right_click_event)
+            tile = Tile(tile_id, frame, img, mine, x_coord, y_coord, self.height, self.width)
+            tile.bind_button(self.left_click_event, self.right_click_event)
+
+            self.tiles.append(tile)
 
             # calculate coords:
             y_coord += 1
@@ -66,11 +68,13 @@ class Minesweeper:
                 x_coord += 1
         
         # lay buttons in grid
-        for key in self.buttons:
-            self.buttons[key].button.grid( row = self.buttons[key].x + 1, column = self.buttons[key].y )
-
-        # find nearby mines and display number on tile
-
+        for i,tile in enumerate(self.tiles):
+            print(tile.tid, i)
+            # lay buttons in grid
+            tile.button.grid( row = tile.x + 1, column = tile.y )
+            # get true tile image
+            if not tile.mine:
+                self.get_mine_count(tile)
 
         #add mine and count at the end
         self.label_num_mine = tk.Label(frame, text = "Mines: "+str(self.num_mines))
@@ -78,10 +82,54 @@ class Minesweeper:
 
         self.label_num_flag = tk.Label(frame, text = "Flags: "+str(self.flags))
         self.label_num_flag.grid(row = self.height + 1, column = self.width // 2 - 1, columnspan = self.width // 2)
-        print("row = ",self.height + 1," column = ",self.width // 2 - 1," columnspan = ",self.width // 2)
+
+
+    def get_mine_count(self, tile):
+        mines = 0
+
+        # above
+        if not tile.onTop:
+            index = tile.tid - self.width
+            mines += 1 if self.tiles[index].mine else 0
+            # above left
+            if not tile.onLeft:
+                index = tile.tid - self.width - 1
+                mines += 1 if self.tiles[index].mine else 0
+            # above right
+            if not tile.onRight:
+                index = tile.tid - self.width + 1
+                mines += 1 if self.tiles[index].mine else 0
+        # below
+        if not tile.onBottom:
+            index = tile.tid + self.width
+            mines += 1 if self.tiles[index].mine else 0
+            # below left
+            if not tile.onLeft:
+                index = tile.tid + self.width - 1
+                mines += 1 if self.tiles[index].mine else 0
+            # below right
+            if not tile.onRight:
+                index = tile.tid + self.width + 1
+                mines += 1 if self.tiles[index].mine else 0
+        # left
+        if not tile.onLeft:
+            index = tile.tid - 1
+            mines += 1 if self.tiles[index].mine else 0
+        # right
+        if not tile.onLeft:
+            index = tile.tid + 1
+            mines += 1 if self.tiles[index].mine else 0
+
+        tile.nearby_mines = mines
+        return mines
+
 
     def left_click_event(self, event):
         print("left clicked at", event.x, event.y)
+        if event.mine:
+            print("mine")
+        else:
+            print(event.nearby_mines)
 
     def right_click_event(self, event):
         print("right clicked at", event.x, event.y)
@@ -93,14 +141,14 @@ class Tile:
         self.button = tk.Button(frame, image = img)
         self.mine = mine
         self.state = 0
-        self.id = tile_id
+        self.tid = tile_id
         self.x = x
         self.y = y
         self.nearby_mines = 0
-        self.onTop = x == 1
+        self.onTop = x == 0
         self.onLeft = y == 0
         self.onRight = y == width - 1
-        self.onBottom = x == height
+        self.onBottom = x == height - 1
 
     def bind_button(self, left_event, right_event):
         self.button.bind('<Button-1>', self.__click_wrapper(left_event))
