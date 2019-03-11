@@ -57,6 +57,7 @@ class Minesweeper:
             # tile image changeable for debug reasons:
             img = self.image_unopened
             self.buttons[x] = Tile(x,frame, img, mine, x_coord, y_coord, self.height, self.width)
+            self.buttons[x].bind_button(self.left_click_event, self.right_click_event)
 
             # calculate coords:
             y_coord += 1
@@ -79,6 +80,13 @@ class Minesweeper:
         self.label_num_flag.grid(row = self.height + 1, column = self.width // 2 - 1, columnspan = self.width // 2)
         print("row = ",self.height + 1," column = ",self.width // 2 - 1," columnspan = ",self.width // 2)
 
+    def left_click_event(self, event):
+        print("left clicked at", event.x, event.y)
+
+    def right_click_event(self, event):
+        print("right clicked at", event.x, event.y)
+
+
 class Tile:
 
     def __init__(self, tile_id, frame, img, mine, x, y, height, width):
@@ -93,6 +101,15 @@ class Tile:
         self.onLeft = y == 0
         self.onRight = y == width - 1
         self.onBottom = x == height
+
+    def bind_button(self, left_event, right_event):
+        self.button.bind('<Button-1>', self.__click_wrapper(left_event))
+        self.button.bind('<Button-2>', self.__click_wrapper(right_event)) # mac trackpads: 2 = right-click
+        self.button.bind('<Button-3>', self.__click_wrapper(right_event))
+
+    def __click_wrapper(self, func):
+        return lambda Button: func(self)
+
 
 
 ### END OF CLASSES ###
