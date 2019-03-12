@@ -1,9 +1,9 @@
 import time
 
 class Timer:
-	def __init__(self):
-        self.start_time = None
-        self.stop_time = None
+    def __init__(self):
+        self.start_time = 0
+        self.stop_time = 0
 
     def start(self):
         self.start_time = time.time()
@@ -11,12 +11,16 @@ class Timer:
     def stop(self):
         self.stop_time = time.time()
 
-    @property
-    def time_elapsed(self):
-        assert not self.stop_time, \
-            "Can't check `time_elapsed` on an ended `Stopwatch`."
-        return time.time() - self.start_time
+    def reset(self):
+        self.start_time = 0
+        self.stop_time = 0
 
     @property
-    def total_run_time(self):
-        return self.stop_time - self.start_time
+    def curr_time(self):
+        if not self.start_time and not self.stop_time:
+            return 0
+        elif not self.stop_time:
+            return round(time.time() - self.start_time,1)
+        else:
+            return round(self.stop_time - self.start_time,1)
+        

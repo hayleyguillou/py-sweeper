@@ -7,6 +7,8 @@ from board import *
 from PIL import Image
 from PIL import ImageTk
 from enum import Enum
+from timer import Timer
+from scores import Scores
 
 
 class Minesweeper:
@@ -18,17 +20,24 @@ class Minesweeper:
         self.frame = tk.Frame(master)
         self.frame.pack()
         self.board = None
+        self.touched = False
+        self.timer = Timer()
+        self.after = None
+        self.scores = Scores()
+        self.scores.print_scores()
 
         self.start_new_game()
         
 
     def start_new_game(self):
         self.game_state = Game_State.PLAYING
-        self.board = Board(5,12,15)
+        self.board = Board(5,12,3)
+        self.timer.reset()
 
         # show "Minesweeper" at the top
-        self.label1 = tk.Label(self.frame, text="Minesweeper")
-        self.label1.grid(row = 0, column = 0, columnspan = self.board.width)
+        self.label_time = tk.Label(self.frame, text="Time: "+str(self.timer.curr_time))
+        self.label_time.grid(row = 0, column = 0, columnspan = self.board.width)
+        self.refresh_timer()
 
         for tile in self.board.tiles:
             tile.set_button(self.frame, self.board.image_unopened)
@@ -40,17 +49,13 @@ class Minesweeper:
         self.label_num_mine.grid(row = self.board.height + 1, column = 0)
 
         self.label_num_flag = tk.Label(self.frame, text = "Flags: "+str(self.board.flags))
-        self.label_num_flag.grid(row = self.board.height + 1, column = 4)
+        self.label_num_flag.grid(row = self.board.height + 1, column = self.board.width-1)
 
     def left_click_event(self, tile):
+        if not self.touched:
+            self.touched = True
+            self.timer.start()
         if tile.mine and tile.state == Tile_State.BLANK: #if a mine
-            # show all mines and check for flags
-            for tile in self.board.tiles:
-                if not tile.mine and tile.state == Tile_State.FLAG:
-                    # change image to wrong image
-                    pass
-                if tile.mine and tile.state != Tile_State.FLAG:
-                    tile.change_button_image(self.board.image_mine)
             # end game
             self.gameover()
         elif tile.state == Tile_State.BLANK:
@@ -68,6 +73,9 @@ class Minesweeper:
                 self.victory()
 
     def right_click_event(self, tile):
+        if not self.touched:
+            self.touched = True
+            self.timer.start()
         print("right clicked at", tile.x, tile.y)
         # if not clicked
         if tile.state == Tile_State.BLANK:
@@ -106,9 +114,15 @@ class Minesweeper:
     def update_flags(self):
         self.label_num_flag.config(text = "Flags: "+str(self.board.flags))
 
+    def refresh_timer(self):
+        self.label_time.config(text="Time: "+str(self.timer.curr_time))
+        self.after = root.after(100, self.refresh_timer)
+
     def victory(self):
         print("you win")
         self.game_state = Game_State.WIN
+        self.end_game()
+        self.scores.save_score("player1", self.timer.curr_time)
 
     def trigger_gameover(self):
         self.game_state = Game_State.LOSS
@@ -116,6 +130,15 @@ class Minesweeper:
     def gameover(self):
         print("you lose")
         self.game_state = Game_State.LOSS
+        self.end_game()
+
+
+    def end_game(self):
+        self.timer.stop()
+        if self.after is not None:
+            root.after_cancel(self.after)
+            self.after = None
+        self.board.reveal_mines()
 
 
 class Game_State(Enum):

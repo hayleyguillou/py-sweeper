@@ -18,18 +18,25 @@ class Tile:
         self.onBottom = x == height - 1
 
     def set_button(self, frame, img):
-        self.button = tk.Button(frame, image = img)
+        self.button = tk.Button(frame, image = img, state=tk.NORMAL)
 
     def bind_button(self, left_event, right_event):
         self.button.bind('<Button-1>', self.__click_wrapper(left_event))
         self.button.bind('<Button-2>', self.__click_wrapper(right_event)) # mac trackpads: 2 = right-click
         self.button.bind('<Button-3>', self.__click_wrapper(right_event))
+        self.button["state"] = tk.NORMAL
 
     def change_button_image(self, img):
         self.button.config(image = img)
 
     def __click_wrapper(self, func):
         return lambda Button: func(self)
+
+    def unbind_button(self):
+        self.button.unbind('<Button-1>')
+        self.button.unbind('<Button-2>')
+        self.button.unbind('<Button-3>')
+        #self.button["state"] = tk.DISABLED
 
     def unbind_left_button(self):
         self.button.unbind('<Button-1>')

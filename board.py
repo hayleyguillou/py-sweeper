@@ -82,6 +82,16 @@ class Board:
 
     def reveal_ring(self, tile):
         self.__do_to_surrounding_tiles(tile, self.__reveal_tile_helper)
+
+    def reveal_mines(self):
+        for tile in self.tiles:
+            tile.unbind_button()
+            if not tile.mine and tile.state == Tile_State.FLAG:
+                # change image to wrong image
+                tile.button.config(bg="red")
+                pass
+            if tile.mine and tile.state != Tile_State.FLAG:
+                tile.change_button_image(self.image_mine)
     
 
     def reveal_tile(self, tile):
