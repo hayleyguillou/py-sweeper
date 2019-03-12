@@ -15,24 +15,31 @@ class Minesweeper:
         self.game_state = 0
 
         # set up frame
-        frame = tk.Frame(master)
-        frame.pack()
-        self.board = Board(5,5,2)
+        self.frame = tk.Frame(master)
+        self.frame.pack()
+        self.board = None
+
+        self.start_new_game()
+        
+
+    def start_new_game(self):
+        self.game_state = Game_State.PLAYING
+        self.board = Board(5,12,15)
 
         # show "Minesweeper" at the top
-        self.label1 = tk.Label(frame, text="Minesweeper")
+        self.label1 = tk.Label(self.frame, text="Minesweeper")
         self.label1.grid(row = 0, column = 0, columnspan = self.board.width)
 
         for tile in self.board.tiles:
-            tile.set_button(frame, self.board.image_unopened)
+            tile.set_button(self.frame, self.board.image_unopened)
             tile.bind_button(self.left_click_event, self.right_click_event)
             tile.button.grid(row = tile.x + 1, column = tile.y)
 
         #add mine and count at the end
-        self.label_num_mine = tk.Label(frame, text = "Mines: "+str(self.board.num_mines))
+        self.label_num_mine = tk.Label(self.frame, text = "Mines: "+str(self.board.num_mines))
         self.label_num_mine.grid(row = self.board.height + 1, column = 0)
 
-        self.label_num_flag = tk.Label(frame, text = "Flags: "+str(self.board.flags))
+        self.label_num_flag = tk.Label(self.frame, text = "Flags: "+str(self.board.flags))
         self.label_num_flag.grid(row = self.board.height + 1, column = 4)
 
     def left_click_event(self, tile):
@@ -101,12 +108,14 @@ class Minesweeper:
 
     def victory(self):
         print("you win")
+        self.game_state = Game_State.WIN
 
     def trigger_gameover(self):
         self.game_state = Game_State.LOSS
 
     def gameover(self):
         print("you lose")
+        self.game_state = Game_State.LOSS
 
 
 class Game_State(Enum):
@@ -118,22 +127,22 @@ class Game_State(Enum):
 
 ### END OF CLASSES ###
 
-def config_menubar():
-    menubar = tk.Menu(root)
+def config_menubar(master):
+    menubar = tk.Menu(master)
     filemenu = tk.Menu(menubar, tearoff=0)
-    filemenu.add_command(label="New", command=donothing)
-    filemenu.add_command(label="Open", command=donothing)
-    filemenu.add_command(label="Save", command=donothing)
-    filemenu.add_separator()
-    filemenu.add_command(label="Exit", command=root.quit)
+    # filemenu.add_command(label="New", command=donothing)
+    # filemenu.add_command(label="Open", command=donothing)
+    # filemenu.add_command(label="Save", command=donothing)
+    # filemenu.add_separator()
+    filemenu.add_command(label="Exit", command=master.quit, accelerator="Cmd+w")
     menubar.add_cascade(label="File", menu=filemenu)
      
-    helpmenu = tk.Menu(menubar, tearoff=0)
-    helpmenu.add_command(label="Help Index", command=donothing)
-    helpmenu.add_command(label="About...", command=donothing)
-    menubar.add_cascade(label="Help", menu=helpmenu)
+    # helpmenu = tk.Menu(menubar, tearoff=0)
+    # helpmenu.add_command(label="Help Index", command=donothing)
+    # helpmenu.add_command(label="About...", command=donothing)
+    # menubar.add_cascade(label="Help", menu=helpmenu)
      
-    root.config(menu=menubar)
+    master.config(menu=menubar)
 
 def donothing():
     pass
@@ -144,7 +153,7 @@ def main():
     root = tk.Tk()
     # set program title
     root.title("Minesweeper")
-    config_menubar()
+    config_menubar(root)
     # create game instance
     minesweeper = Minesweeper(root)
     # run event loop
