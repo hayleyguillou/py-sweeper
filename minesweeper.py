@@ -5,30 +5,31 @@ import tkinter.messagebox
 from PIL import Image
 from PIL import ImageTk
 import random
+from enum import Enum
 
 class Minesweeper:
 
     def __init__(self, master):
-        self.height = 10
-        self.width = 10
+        self.height = 5
+        self.width = 5
         self.num_tiles = self.width * self.height
-        self.num_mines = 20
+        self.num_mines = 5
 
         # import images
         i_width = 20
         i_height = 20
-        self.image_unopened = ImageTk.PhotoImage(Image.open("img/unopened.gif").resize((i_width,i_height), Image.ANTIALIAS))
-        self.image_opened = ImageTk.PhotoImage(Image.open("img/opened.gif").resize((i_width,i_height), Image.ANTIALIAS))
-        self.image_mine = ImageTk.PhotoImage(Image.open("img/mine.gif").resize((i_width,i_height), Image.ANTIALIAS))
-        self.image_flag = ImageTk.PhotoImage(Image.open("img/flag.gif").resize((i_width,i_height), Image.ANTIALIAS))
-        self.image_question = ImageTk.PhotoImage(Image.open("img/question.gif").resize((i_width,i_height), Image.ANTIALIAS))
-        self.tile_no = [ImageTk.PhotoImage(Image.open("img/"+str(x)+".gif").resize((i_width,i_height), Image.ANTIALIAS)) for x in range(1,9)]
-        # self.image_unopened = tk.PhotoImage(file = "img/unopened.gif")
-        # self.image_opened = tk.PhotoImage(file = "img/opened.gif")
-        # self.image_mine = tk.PhotoImage(file = "img/mine.gif")
-        # self.image_flag = tk.PhotoImage(file = "img/flag.gif")
-        # self.image_question = tk.PhotoImage(file = "img/question.gif")
-        # self.tile_no = [tk.PhotoImage(file = "img/"+str(x)+".gif") for x in range(1,9)]
+        # self.image_unopened = ImageTk.PhotoImage(Image.open("img/unopened.gif").resize((i_width,i_height), Image.ANTIALIAS))
+        # self.image_opened = ImageTk.PhotoImage(Image.open("img/opened.gif").resize((i_width,i_height), Image.ANTIALIAS))
+        # self.image_mine = ImageTk.PhotoImage(Image.open("img/mine.gif").resize((i_width,i_height), Image.ANTIALIAS))
+        # self.image_flag = ImageTk.PhotoImage(Image.open("img/flag.gif").resize((i_width,i_height), Image.ANTIALIAS))
+        # self.image_question = ImageTk.PhotoImage(Image.open("img/question.gif").resize((i_width,i_height), Image.ANTIALIAS))
+        # self.image_num = [ImageTk.PhotoImage(Image.open("img/"+str(x)+".gif").resize((i_width,i_height), Image.ANTIALIAS)) for x in range(1,9)]
+        self.image_unopened = tk.PhotoImage(file = "img/unopened.gif")
+        self.image_opened = tk.PhotoImage(file = "img/opened.gif")
+        self.image_mine = tk.PhotoImage(file = "img/mine.gif")
+        self.image_flag = tk.PhotoImage(file = "img/flag.gif")
+        self.image_question = tk.PhotoImage(file = "img/question.gif")
+        self.image_num = [tk.PhotoImage(file = "img/"+str(x)+".gif") for x in range(1,9)]
 
         # set up frame
         frame = tk.Frame(master)
@@ -69,7 +70,6 @@ class Minesweeper:
         
         # lay buttons in grid
         for i,tile in enumerate(self.tiles):
-            print(tile.tid, i)
             # lay buttons in grid
             tile.button.grid( row = tile.x + 1, column = tile.y )
             # get true tile image
@@ -78,10 +78,10 @@ class Minesweeper:
 
         #add mine and count at the end
         self.label_num_mine = tk.Label(frame, text = "Mines: "+str(self.num_mines))
-        self.label_num_mine.grid(row = self.height + 1, column = 0, columnspan = self.width // 2)
+        self.label_num_mine.grid(row = self.height + 1, column = 0, columnspan = 5)
 
         self.label_num_flag = tk.Label(frame, text = "Flags: "+str(self.flags))
-        self.label_num_flag.grid(row = self.height + 1, column = self.width // 2 - 1, columnspan = self.width // 2)
+        self.label_num_flag.grid(row = self.height + 1, column = 4, columnspan = 5)
 
 
     def get_mine_count(self, tile):
@@ -116,7 +116,7 @@ class Minesweeper:
             index = tile.tid - 1
             mines += 1 if self.tiles[index].mine else 0
         # right
-        if not tile.onLeft:
+        if not tile.onRight:
             index = tile.tid + 1
             mines += 1 if self.tiles[index].mine else 0
 
@@ -124,15 +124,104 @@ class Minesweeper:
         return mines
 
 
-    def left_click_event(self, event):
-        print("left clicked at", event.x, event.y)
-        if event.mine:
-            print("mine")
+    def left_click_event(self, tile):
+        if tile.mine and tile.state == Tile_State.BLANK: #if a mine
+            # show all mines and check for flags
+            for tile in self.tiles:
+                if not tile.mine and tile.state == Tile_State.FLAG:
+                    # change image to wrong image
+                    pass
+                if tile.mine and tile.state != Tile_State.FLAG:
+                    tile.button.config(image = self.image_mine)
+            # end game
+            self.gameover()
         else:
-            print(event.nearby_mines)
+            self.reveal_tile(tile)
 
-    def right_click_event(self, event):
-        print("right clicked at", event.x, event.y)
+    def right_click_event(self, tile):
+        print("right clicked at", tile.x, tile.y)
+        # if not clicked
+        if tile.state == Tile_State.BLANK:
+            tile.state = Tile_State.FLAG
+            tile.button.config(image = self.image_flag)
+            #button_data[0].unbind('<Button-1>')
+            # if a mine
+            if tile.mine:
+                self.correct_flags += 1
+            self.flags += 1
+            self.update_flags()
+        # if flagged, unflag
+        elif tile.state == Tile_State.FLAG:
+            tile.state = Tile_State.QUESTION
+            tile.button.config(image = self.image_question)
+            #button_data[0].bind('<Button-1>', self.lclicked_wrapper(button_data[3]))
+            # if a mine
+            if tile.mine:
+                self.correct_flags -= 1
+            self.flags -= 1
+            self.update_flags()
+        elif tile.state == Tile_State.QUESTION:
+            tile.state = Tile_State.BLANK
+            tile.button.config(image = self.image_unopened)
+
+    def reveal_tile(self, tile):
+        if tile.state != Tile_State.CLICKED:
+            tile.state = Tile_State.CLICKED
+            self.clicked += 1
+            #change image
+            if not tile.nearby_mines:
+                self.show_empty_tiles(tile)
+            else:
+                tile.button.config(image = self.image_num[tile.nearby_mines-1])
+            # if not already set as clicked, change state and count
+            if self.clicked == self.num_tiles - self.num_mines:
+                self.victory()
+
+    def show_empty_tiles(self, tile):
+        tile.button.config(image = self.image_opened)
+        # above
+        if not tile.onTop:
+            index = tile.tid - self.width
+            self.reveal_tile(self.tiles[index])
+            # above left
+            if not tile.onLeft:
+                index = tile.tid - self.width - 1
+                self.reveal_tile(self.tiles[index])
+            # above right
+            if not tile.onRight:
+                index = tile.tid - self.width + 1
+                self.reveal_tile(self.tiles[index])
+        # below
+        if not tile.onBottom:
+            index = tile.tid + self.width
+            self.reveal_tile(self.tiles[index])
+            # below left
+            if not tile.onLeft:
+                index = tile.tid + self.width - 1
+                self.reveal_tile(self.tiles[index])
+            # below right
+            if not tile.onRight:
+                index = tile.tid + self.width + 1
+                self.reveal_tile(self.tiles[index])
+        # left
+        if not tile.onLeft:
+            index = tile.tid - 1
+            self.reveal_tile(self.tiles[index])
+        # right
+        if not tile.onRight:
+            index = tile.tid + 1
+            self.reveal_tile(self.tiles[index])
+
+
+    def update_flags(self):
+        self.label_num_flag.config(text = "Flags: "+str(self.flags))
+
+    def victory(self):
+        print("you win")
+
+    def gameover(self):
+        print("you lose")
+
 
 
 class Tile:
@@ -140,7 +229,7 @@ class Tile:
     def __init__(self, tile_id, frame, img, mine, x, y, height, width):
         self.button = tk.Button(frame, image = img)
         self.mine = mine
-        self.state = 0
+        self.state = Tile_State.BLANK
         self.tid = tile_id
         self.x = x
         self.y = y
@@ -157,6 +246,12 @@ class Tile:
 
     def __click_wrapper(self, func):
         return lambda Button: func(self)
+
+class Tile_State(Enum):
+    BLANK = 0
+    FLAG = 1
+    QUESTION = 2
+    CLICKED = 3
 
 
 
